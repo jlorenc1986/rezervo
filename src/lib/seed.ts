@@ -2,6 +2,7 @@ import type { Operator, Service, StoreData } from "./types";
 
 export const DEMO_OPERATOR: Operator = {
   id: "op_blue_ionian",
+  authUserId: null,
   slug: "blue-ionian",
   name: "Blue Ionian Tours",
   tagline: "Boat, transfer e trekking da Saranda",

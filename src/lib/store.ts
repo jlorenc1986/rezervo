@@ -216,6 +216,7 @@ export async function resetDemoStore(): Promise<{
 
   await db.insert(operators).values({
     id: DEMO_OPERATOR.id,
+    authUserId: null,
     slug: DEMO_OPERATOR.slug,
     name: DEMO_OPERATOR.name,
     tagline: DEMO_OPERATOR.tagline,

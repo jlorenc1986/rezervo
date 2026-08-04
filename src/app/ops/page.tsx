@@ -1,18 +1,11 @@
-import { notFound } from "next/navigation";
 import { OpsDashboard } from "@/components/OpsDashboard";
-import {
-  ensureSeeded,
-  getBookingsForOperator,
-  getOperatorBySlug,
-  getService,
-} from "@/lib/store";
+import { requireOperator } from "@/lib/auth";
+import { getBookingsForOperator, getService } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
 
 export default async function OpsPage() {
-  await ensureSeeded();
-  const operator = await getOperatorBySlug("blue-ionian");
-  if (!operator) notFound();
+  const { operator } = await requireOperator();
 
   const bookings = await getBookingsForOperator(operator.id);
   const initialBookings = await Promise.all(

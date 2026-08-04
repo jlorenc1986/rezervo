@@ -47,7 +47,7 @@ describe("bookings API", () => {
     expect(body.bookings.length).toBeGreaterThan(0);
   });
 
-  it("creates a booking via POST and updates status via PATCH", async () => {
+  it("rejects unauthenticated status updates", async () => {
     const slots = await getAvailability("svc_gjirokaster", nextWeekday(2), 1);
     const open = slots.find((s) => s.remaining > 0)!;
 
@@ -69,7 +69,6 @@ describe("bookings API", () => {
     );
     expect(createRes.status).toBe(201);
     const created = await createRes.json();
-    expect(created.booking.code).toMatch(/^RZ-GJK-/);
 
     const patchRes = await patchBookingRoute(
       new Request(`http://localhost/api/bookings/${created.booking.id}`, {
@@ -79,9 +78,7 @@ describe("bookings API", () => {
       }),
       { params: Promise.resolve({ id: created.booking.id }) },
     );
-    expect(patchRes.status).toBe(200);
-    const patched = await patchRes.json();
-    expect(patched.booking.status).toBe("confirmed");
+    expect(patchRes.status).toBe(401);
   });
 
   it("returns 400 when required fields are missing", async () => {

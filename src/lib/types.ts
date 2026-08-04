@@ -10,6 +10,7 @@ export type Locale = "en" | "it" | "sq";
 
 export type Operator = {
   id: string;
+  authUserId: string | null;
   slug: string;
   name: string;
   tagline: string;

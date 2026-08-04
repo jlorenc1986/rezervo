@@ -11,16 +11,16 @@ export default function HomePage() {
             </p>
             <nav className="flex items-center gap-3 text-sm">
               <Link
-                href="/ops"
+                href="/login"
                 className="rounded-full border border-white/25 px-4 py-2 text-foam/90 hover:bg-white/10 transition"
               >
-                Dashboard
+                Sign in
               </Link>
               <Link
-                href="/book/blue-ionian"
+                href="/signup"
                 className="rounded-full bg-accent-hot px-4 py-2 font-medium text-white hover:brightness-110 transition"
               >
-                Prova booking
+                Start free
               </Link>
             </nav>
           </header>
@@ -35,16 +35,16 @@ export default function HomePage() {
             </p>
             <div className="mt-8 flex flex-wrap gap-3 rise rise-delay-3">
               <Link
-                href="/book/blue-ionian"
+                href="/signup"
                 className="rounded-full bg-white px-6 py-3 font-medium text-sea-deep hover:bg-foam transition"
               >
-                Apri demo Saranda
+                Create operator account
               </Link>
               <Link
-                href="/ops"
+                href="/book/blue-ionian"
                 className="rounded-full border border-white/30 px-6 py-3 text-white hover:bg-white/10 transition"
               >
-                Vedi ops di oggi
+                Try demo booking
               </Link>
             </div>
           </div>
@@ -98,10 +98,10 @@ export default function HomePage() {
             </p>
           </div>
           <Link
-            href="/ops"
+            href="/login"
             className="self-start rounded-full bg-sea px-6 py-3 text-white hover:bg-sea-deep transition"
           >
-            Apri dashboard →
+            Operator dashboard →
           </Link>
         </div>
       </section>

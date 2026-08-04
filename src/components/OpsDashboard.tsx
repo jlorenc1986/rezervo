@@ -49,10 +49,10 @@ export function OpsDashboard({ operator, initialBookings }: Props) {
   const [shareCopied, setShareCopied] = useState(false);
 
   const reload = useCallback(async () => {
-    const res = await fetch(`/api/bookings?slug=${operator.slug}`);
+    const res = await fetch("/api/bookings/mine");
     const data = await res.json();
-    setBookings(data.bookings);
-  }, [operator.slug]);
+    setBookings(data.bookings ?? []);
+  }, []);
 
   const today = todayIso();
 
@@ -116,6 +116,12 @@ export function OpsDashboard({ operator, initialBookings }: Props) {
           <p className="text-muted mt-1">Ops · {operator.city}</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Link
+            href="/ops/services"
+            className="rounded-full border border-line px-4 py-2 text-sm hover:border-sea/40"
+          >
+            Services
+          </Link>
           <button
             type="button"
             onClick={() => void copyBookingLink()}
@@ -137,6 +143,14 @@ export function OpsDashboard({ operator, initialBookings }: Props) {
           >
             Vista cliente
           </Link>
+          <form action="/auth/signout" method="post">
+            <button
+              type="submit"
+              className="rounded-full border border-line px-4 py-2 text-sm text-muted hover:text-ink"
+            >
+              Sign out
+            </button>
+          </form>
         </div>
       </header>
 
