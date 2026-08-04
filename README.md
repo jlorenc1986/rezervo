@@ -29,6 +29,21 @@ Data lives in `data/store.json` (created on first request). Reset demo data:
 curl -X POST http://localhost:3000/api/demo/reset
 ```
 
+## Scripts
+
+| Command | Purpose |
+|---|---|
+| `npm run dev` | Local development server |
+| `npm run test` | Vitest in watch mode |
+| `npm run test:ci` | Single test run |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | TypeScript (`tsc --noEmit`) |
+| `npm run build` | Production build |
+| `npm run ci` | lint + typecheck + tests + build |
+
+## CI
+
+GitHub Actions runs on pushes and pull requests to `main` (`.github/workflows/ci.yml`): install, lint, typecheck, tests, build.
 ## MVP scope
 
 Included:

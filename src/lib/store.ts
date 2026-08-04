@@ -11,24 +11,31 @@ import type {
   StoreData,
 } from "./types";
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const STORE_PATH = path.join(DATA_DIR, "store.json");
+function dataDir(): string {
+  return process.env.REZERVO_DATA_DIR
+    ? path.resolve(process.env.REZERVO_DATA_DIR)
+    : path.join(process.cwd(), "data");
+}
+
+function storePath(): string {
+  return path.join(dataDir(), "store.json");
+}
 
 async function ensureStore(): Promise<StoreData> {
   try {
-    const raw = await fs.readFile(STORE_PATH, "utf8");
+    const raw = await fs.readFile(storePath(), "utf8");
     return JSON.parse(raw) as StoreData;
   } catch {
     const seed = createSeedStore();
-    await fs.mkdir(DATA_DIR, { recursive: true });
-    await fs.writeFile(STORE_PATH, JSON.stringify(seed, null, 2), "utf8");
+    await fs.mkdir(dataDir(), { recursive: true });
+    await fs.writeFile(storePath(), JSON.stringify(seed, null, 2), "utf8");
     return seed;
   }
 }
 
 async function writeStore(data: StoreData): Promise<void> {
-  await fs.mkdir(DATA_DIR, { recursive: true });
-  await fs.writeFile(STORE_PATH, JSON.stringify(data, null, 2), "utf8");
+  await fs.mkdir(dataDir(), { recursive: true });
+  await fs.writeFile(storePath(), JSON.stringify(data, null, 2), "utf8");
 }
 
 export async function getStore(): Promise<StoreData> {

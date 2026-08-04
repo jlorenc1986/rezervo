@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import type { Booking, BookingStatus, Operator } from "@/lib/types";
 import {
@@ -11,7 +11,12 @@ import {
   whatsappLink,
 } from "@/lib/format";
 
-type EnrichedBooking = Booking & { serviceName: string };
+export type EnrichedBooking = Booking & { serviceName: string };
+
+type Props = {
+  operator: Operator;
+  initialBookings: EnrichedBooking[];
+};
 
 const STATUS_ACTIONS: { status: BookingStatus; label: string }[] = [
   { status: "confirmed", label: "Conferma" },
@@ -38,24 +43,16 @@ function tone(status: BookingStatus) {
   }
 }
 
-export function OpsDashboard() {
-  const [operator, setOperator] = useState<Operator | null>(null);
-  const [bookings, setBookings] = useState<EnrichedBooking[]>([]);
+export function OpsDashboard({ operator, initialBookings }: Props) {
+  const [bookings, setBookings] = useState(initialBookings);
   const [filter, setFilter] = useState<"today" | "all" | "pending">("today");
-  const [loading, setLoading] = useState(true);
   const [shareCopied, setShareCopied] = useState(false);
 
-  const load = useCallback(async () => {
-    const res = await fetch("/api/bookings?slug=blue-ionian");
+  const reload = useCallback(async () => {
+    const res = await fetch(`/api/bookings?slug=${operator.slug}`);
     const data = await res.json();
-    setOperator(data.operator);
     setBookings(data.bookings);
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
+  }, [operator.slug]);
 
   const today = todayIso();
 
@@ -84,30 +81,26 @@ export function OpsDashboard() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     });
-    if (res.ok) await load();
+    if (res.ok) await reload();
   }
 
   async function resetDemo() {
     await fetch("/api/demo/reset", { method: "POST" });
-    await load();
+    await reload();
   }
 
   async function copyBookingLink() {
-    const url = `${window.location.origin}/book/blue-ionian`;
+    const url = `${window.location.origin}/book/${operator.slug}`;
     await navigator.clipboard.writeText(url);
     setShareCopied(true);
-    setTimeout(() => setShareCopied(false), 2000);
+    window.setTimeout(() => setShareCopied(false), 2000);
   }
 
-  if (loading || !operator) {
-    return (
-      <div className="mx-auto max-w-5xl px-6 py-16 text-muted">Caricamento…</div>
-    );
-  }
-
+  const origin =
+    typeof window !== "undefined" ? window.location.origin : "https://rezervo.app";
   const waShare = whatsappLink(
     operator.whatsapp,
-    `Prenota online con ${operator.name}: ${typeof window !== "undefined" ? window.location.origin : ""}/book/${operator.slug}`,
+    `Prenota online con ${operator.name}: ${origin}/book/${operator.slug}`,
   );
 
   return (

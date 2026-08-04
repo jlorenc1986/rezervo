@@ -25,9 +25,9 @@ export function BookingForm({ operator, services, availability }: Props) {
   const [loading, setLoading] = useState(false);
 
   const service = services.find((s) => s.id === serviceId);
-  const slots = availability[serviceId] ?? [];
 
   const dates = useMemo(() => {
+    const slots = availability[serviceId] ?? [];
     const map = new Map<string, SlotAvailability[]>();
     for (const slot of slots) {
       if (slot.remaining <= 0) continue;
@@ -36,7 +36,7 @@ export function BookingForm({ operator, services, availability }: Props) {
       map.set(slot.date, list);
     }
     return [...map.entries()];
-  }, [slots]);
+  }, [availability, serviceId]);
 
   const timesForDate = dates.find(([d]) => d === date)?.[1] ?? [];
 
