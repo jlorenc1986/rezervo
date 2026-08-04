@@ -1,0 +1,19 @@
+services:
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "54329:5432"
+    environment:
+      POSTGRES_USER: rezervo
+      POSTGRES_PASSWORD: rezervo
+      POSTGRES_DB: rezervo
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rezervo -d rezervo"]
+      interval: 3s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - rezervo_pg:/var/lib/postgresql/data
+
+volumes:
+  rezervo_pg:

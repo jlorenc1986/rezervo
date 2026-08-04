@@ -3,16 +3,20 @@ import { notFound } from "next/navigation";
 import { BookingForm } from "@/components/BookingForm";
 import { todayIso } from "@/lib/format";
 import {
+  ensureSeeded,
   getAvailability,
   getOperatorBySlug,
   getServicesForOperator,
 } from "@/lib/store";
+
+export const dynamic = "force-dynamic";
 
 export default async function BookPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
+  await ensureSeeded();
   const { slug } = await params;
   const operator = await getOperatorBySlug(slug);
   if (!operator) notFound();

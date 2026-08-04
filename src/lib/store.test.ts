@@ -1,7 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { promises as fs } from "fs";
-import os from "os";
-import path from "path";
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { closeDb } from "@/lib/db/client";
 import {
   createBooking,
   getAvailability,
@@ -12,25 +10,21 @@ import {
 } from "@/lib/store";
 import { DEMO_OPERATOR } from "@/lib/seed";
 
-async function useTempStore() {
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "rezervo-"));
-  process.env.REZERVO_DATA_DIR = dir;
-  await resetDemoStore();
-  return dir;
-}
-
 describe("booking store", () => {
-  let tempDir = "";
+  beforeAll(() => {
+    if (!process.env.DATABASE_URL) {
+      throw new Error(
+        "DATABASE_URL required for store tests (docker compose up -d)",
+      );
+    }
+  });
 
   beforeEach(async () => {
-    tempDir = await useTempStore();
+    await resetDemoStore();
   });
 
   afterEach(async () => {
-    delete process.env.REZERVO_DATA_DIR;
-    if (tempDir) {
-      await fs.rm(tempDir, { recursive: true, force: true });
-    }
+    await closeDb();
   });
 
   it("loads the demo operator by slug", async () => {
@@ -148,17 +142,12 @@ describe("booking store", () => {
 
     await updateBookingStatus(created.booking.id, "cancelled");
 
-    const slotsAfter = await getAvailability(
-      "svc_gjirokaster",
-      open.date,
-      1,
-    );
+    const slotsAfter = await getAvailability("svc_gjirokaster", open.date, 1);
     const after = slotsAfter.find((s) => s.time === open.time);
     expect(after?.remaining).toBe(remainingBefore);
   });
 });
 
-/** Next calendar date whose weekday matches `weekday` (0=Sun … 6=Sat). */
 function nextWeekday(weekday: number): string {
   const d = new Date();
   for (let i = 0; i < 14; i++) {

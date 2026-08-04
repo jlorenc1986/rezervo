@@ -1,17 +1,11 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { promises as fs } from "fs";
-import os from "os";
-import path from "path";
-import { POST as createBookingRoute, GET as listBookingsRoute } from "@/app/api/bookings/route";
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import {
+  POST as createBookingRoute,
+  GET as listBookingsRoute,
+} from "@/app/api/bookings/route";
 import { PATCH as patchBookingRoute } from "@/app/api/bookings/[id]/route";
-import { resetDemoStore, getAvailability } from "@/lib/store";
-
-async function useTempStore() {
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "rezervo-api-"));
-  process.env.REZERVO_DATA_DIR = dir;
-  await resetDemoStore();
-  return dir;
-}
+import { closeDb } from "@/lib/db/client";
+import { getAvailability, resetDemoStore } from "@/lib/store";
 
 function nextWeekday(weekday: number): string {
   const d = new Date();
@@ -29,17 +23,18 @@ function nextWeekday(weekday: number): string {
 }
 
 describe("bookings API", () => {
-  let tempDir = "";
+  beforeAll(() => {
+    if (!process.env.DATABASE_URL) {
+      throw new Error("DATABASE_URL required for API tests");
+    }
+  });
 
   beforeEach(async () => {
-    tempDir = await useTempStore();
+    await resetDemoStore();
   });
 
   afterEach(async () => {
-    delete process.env.REZERVO_DATA_DIR;
-    if (tempDir) {
-      await fs.rm(tempDir, { recursive: true, force: true });
-    }
+    await closeDb();
   });
 
   it("lists seeded bookings for the demo operator", async () => {

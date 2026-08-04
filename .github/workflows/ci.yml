@@ -16,6 +16,24 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: rezervo
+          POSTGRES_PASSWORD: rezervo
+          POSTGRES_DB: rezervo
+        ports:
+          - 54329:5432
+        options: >-
+          --health-cmd "pg_isready -U rezervo -d rezervo"
+          --health-interval 3s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://rezervo:rezervo@127.0.0.1:54329/rezervo
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,6 +46,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Migrate database
+        run: npm run db:migrate
 
       - name: Lint
         run: npm run lint

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { OpsDashboard } from "@/components/OpsDashboard";
 import {
+  ensureSeeded,
   getBookingsForOperator,
   getOperatorBySlug,
   getService,
@@ -9,6 +10,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function OpsPage() {
+  await ensureSeeded();
   const operator = await getOperatorBySlug("blue-ionian");
   if (!operator) notFound();
 

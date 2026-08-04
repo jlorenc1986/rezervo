@@ -1,0 +1,19 @@
+# Rezervo on Railway (Nixpacks detects Next.js)
+# https://docs.railway.com/guides/nextjs
+#
+# Required env in Railway:
+#   DATABASE_URL = Supabase Transaction pooler URI (port 6543)
+#
+# After first deploy, run once (Railway shell or local against prod URL):
+#   npm run db:migrate
+#   npm run db:seed
+
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "npm run start"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 120
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3

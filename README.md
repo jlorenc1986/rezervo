@@ -4,6 +4,12 @@ Booking ops MVP for **tours, transfers, and boat trips** in Albania — without 
 
 Flow: shareable WhatsApp link → guest picks service / date / seats → confirmation code + deposit → operator dashboard (confirm, deposit paid, no-show).
 
+## Stack
+
+- **App:** Next.js 16 on [Railway](https://railway.app)
+- **DB:** Postgres on [Supabase](https://supabase.com) (Drizzle ORM)
+- **Local DB option:** Docker Compose Postgres
+
 ## Demo
 
 Seed operator: **Blue Ionian Tours** (Saranda)
@@ -13,58 +19,78 @@ Seed operator: **Blue Ionian Tours** (Saranda)
 | `/` | Product landing |
 | `/book/blue-ionian` | Public booking page (IT / EN / SQ) |
 | `/ops` | Operator dashboard |
+| `/api/health` | Health check (Railway) |
 
-## Getting started
+## Setup
+
+1. Copy env:
+
+```bash
+cp .env.example .env.local
+```
+
+2. Set `DATABASE_URL` to either:
+
+- **Supabase** Transaction pooler URI (port **6543**), or
+- **Local Docker:** `postgresql://rezervo:rezervo@127.0.0.1:54329/rezervo`
 
 ```bash
 npm install
+npm run db:up          # only if using local Docker
+npm run db:migrate
+npm run db:seed
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
 
-Data lives in `data/store.json` (created on first request). Reset demo data:
+Reset demo rows:
 
 ```bash
 curl -X POST http://localhost:3000/api/demo/reset
+# or
+npm run db:seed
 ```
 
 ## Scripts
 
 | Command | Purpose |
 |---|---|
-| `npm run dev` | Local development server |
-| `npm run test` | Vitest in watch mode |
-| `npm run test:ci` | Single test run |
-| `npm run lint` | ESLint |
-| `npm run typecheck` | TypeScript (`tsc --noEmit`) |
-| `npm run build` | Production build |
+| `npm run dev` | Local development |
+| `npm run test` / `test:ci` | Vitest |
+| `npm run lint` / `typecheck` / `build` | Quality gates |
 | `npm run ci` | lint + typecheck + tests + build |
+| `npm run db:up` / `db:down` | Local Postgres |
+| `npm run db:migrate` | Apply Drizzle migrations |
+| `npm run db:seed` | Seed Blue Ionian demo |
+| `npm run db:studio` | Drizzle Studio |
+
+## Railway deploy
+
+1. Create a Railway service from this repo (Nixpacks / Next.js).
+2. Set `DATABASE_URL` to your **Supabase** pooler URI.
+3. Deploy, then run once against that DB:
+
+```bash
+DATABASE_URL='…supabase…' npm run db:migrate
+DATABASE_URL='…supabase…' npm run db:seed
+```
+
+`railway.toml` healthcheck hits `/api/health`.
 
 ## CI
 
-GitHub Actions runs on pushes and pull requests to `main` (`.github/workflows/ci.yml`): install, lint, typecheck, tests, build.
+GitHub Actions on `main`: spins up Postgres, migrates, then lint → typecheck → tests → build.
+
 ## MVP scope
 
 Included:
 - Per-slot capacity (no overbooking)
 - Deposit % per service
 - Statuses: pending → confirmed → deposit_paid → completed / no_show / cancelled
-- WhatsApp deep links (guest ↔ operator)
-- Seed bookings for “today”
+- WhatsApp deep links
+- Postgres persistence (Supabase / local)
 
-**What is still missing before handing this to a real operator:** see [OPERATOR-READY.md](./OPERATOR-READY.md).
+**Still missing for a real operator:** see [OPERATOR-READY.md](./OPERATOR-READY.md).
 
-Out of scope for now:
-- WhatsApp Business API / AI inbox
-- Albanian fiscalization (fiskalizimi / DPT)
-- Channel manager / OTAs
-- Native mobile apps
-
-## Stack
-
-Next.js 16 · React 19 · Tailwind CSS 4 · local JSON file store
-
-## License
-
-Private / unpublished unless noted otherwise.
+Next build order: **auth + operator onboarding** (block 2).
