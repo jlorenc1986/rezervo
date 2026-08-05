@@ -15,6 +15,7 @@ export type CreateOperatorInput = {
   tagline?: string;
   depositNote?: string;
   locale?: Locale;
+  notificationEmail?: string;
 };
 
 export type CreateServiceInput = {
@@ -80,6 +81,7 @@ export async function createOperatorForUser(
       depositNote:
         input.depositNote?.trim() ||
         "Pay the deposit via Wise/Revolut or cash at the meeting point. Balance due on the day.",
+      notificationEmail: input.notificationEmail?.trim() ?? "",
       createdAt: now,
       updatedAt: now,
     })
@@ -141,21 +143,29 @@ export type UpdateDepositSettingsInput = {
   depositIban?: string;
   depositRevolutLink?: string;
   depositWiseLink?: string;
+  notificationEmail?: string;
 };
 
 export async function updateOperatorDepositSettings(
   input: UpdateDepositSettingsInput,
 ): Promise<Operator | null> {
   const db = getDb();
+  const patch: Record<string, string | Date> = { updatedAt: new Date() };
+  if (input.depositNote !== undefined) patch.depositNote = input.depositNote.trim();
+  if (input.depositIban !== undefined) patch.depositIban = input.depositIban.trim();
+  if (input.depositRevolutLink !== undefined) {
+    patch.depositRevolutLink = input.depositRevolutLink.trim();
+  }
+  if (input.depositWiseLink !== undefined) {
+    patch.depositWiseLink = input.depositWiseLink.trim();
+  }
+  if (input.notificationEmail !== undefined) {
+    patch.notificationEmail = input.notificationEmail.trim();
+  }
+
   const updated = await db
     .update(operators)
-    .set({
-      depositNote: input.depositNote?.trim() ?? "",
-      depositIban: input.depositIban?.trim() ?? "",
-      depositRevolutLink: input.depositRevolutLink?.trim() ?? "",
-      depositWiseLink: input.depositWiseLink?.trim() ?? "",
-      updatedAt: new Date(),
-    })
+    .set(patch)
     .where(eq(operators.id, input.operatorId))
     .returning();
   return updated[0] ? mapOperator(updated[0]) : null;

@@ -11,6 +11,9 @@ export function DepositSettingsForm({ operator }: { operator: Operator }) {
     operator.depositRevolutLink,
   );
   const [depositWiseLink, setDepositWiseLink] = useState(operator.depositWiseLink);
+  const [notificationEmail, setNotificationEmail] = useState(
+    operator.notificationEmail,
+  );
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -29,6 +32,7 @@ export function DepositSettingsForm({ operator }: { operator: Operator }) {
           depositIban,
           depositRevolutLink,
           depositWiseLink,
+          notificationEmail,
         }),
       });
       const data = await res.json();
@@ -80,6 +84,21 @@ export function DepositSettingsForm({ operator }: { operator: Operator }) {
           className="mt-1 w-full border border-line bg-surface px-3 py-2"
           placeholder="https://revolut.me/yourname or @yourname"
         />
+      </label>
+
+      <label className="block">
+        <span className="text-sm text-muted">Email for new booking alerts</span>
+        <input
+          type="email"
+          value={notificationEmail}
+          onChange={(e) => setNotificationEmail(e.target.value)}
+          className="mt-1 w-full border border-line bg-surface px-3 py-2"
+          placeholder="you@example.com"
+        />
+        <p className="mt-1 text-xs text-muted">
+          Requires RESEND_API_KEY on the server. Dashboard also auto-refreshes every
+          45s.
+        </p>
       </label>
 
       <label className="block">

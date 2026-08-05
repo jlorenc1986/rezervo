@@ -17,6 +17,7 @@ const operator: Operator = {
   depositIban: "AL47 2121 1010 0000 0002 3569 8741",
   depositRevolutLink: "https://revolut.me/test",
   depositWiseLink: "",
+  notificationEmail: "",
 };
 
 describe("deposit helpers", () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import type { Booking, BookingStatus, Operator } from "@/lib/types";
 import {
@@ -48,11 +48,28 @@ export function OpsDashboard({ operator, initialBookings }: Props) {
   const [bookings, setBookings] = useState(initialBookings);
   const [filter, setFilter] = useState<"today" | "all" | "pending">("today");
   const [shareCopied, setShareCopied] = useState(false);
+  const [newAlert, setNewAlert] = useState<string | null>(null);
+  const knownIdsRef = useRef(new Set(initialBookings.map((b) => b.id)));
 
   const reload = useCallback(async () => {
     const res = await fetch("/api/bookings/mine");
     const data = await res.json();
-    setBookings(data.bookings ?? []);
+    const list = (data.bookings ?? []) as EnrichedBooking[];
+    const fresh = list.filter((b) => !knownIdsRef.current.has(b.id));
+    if (fresh.length > 0) {
+      for (const b of list) knownIdsRef.current.add(b.id);
+      const label = `${fresh.length} new booking${fresh.length > 1 ? "s" : ""}`;
+      setNewAlert(label);
+      if (
+        typeof Notification !== "undefined" &&
+        Notification.permission === "granted"
+      ) {
+        new Notification("Rezervo", {
+          body: `${fresh[0].code} · ${fresh[0].guestName}`,
+        });
+      }
+    }
+    setBookings(list);
   }, []);
 
   const today = todayIso();
@@ -75,6 +92,16 @@ export function OpsDashboard({ operator, initialBookings }: Props) {
     const deposits = bookings.filter((b) => b.status === "deposit_paid").length;
     return { todays: todays.length, guests, pendingPay, deposits };
   }, [bookings, today]);
+
+  useEffect(() => {
+    const id = window.setInterval(() => void reload(), 45000);
+    return () => window.clearInterval(id);
+  }, [reload]);
+
+  async function enablePush() {
+    if (typeof Notification === "undefined") return;
+    await Notification.requestPermission();
+  }
 
   async function setStatus(id: string, status: BookingStatus) {
     const res = await fetch(`/api/bookings/${id}`, {
@@ -105,7 +132,31 @@ export function OpsDashboard({ operator, initialBookings }: Props) {
   );
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-8 md:py-10">
+    <div className="mx-auto max-w-5xl px-4 md:px-6 py-6 md:py-10 pb-24">
+      {newAlert && (
+        <div
+          className="mb-4 flex items-center justify-between gap-3 border border-ok/30 bg-ok/10 px-4 py-3 text-sm text-ok"
+        >
+          <span>{newAlert}</span>
+          <button
+            type="button"
+            className="text-ok underline-offset-2 hover:underline"
+            onClick={() => setNewAlert(null)}
+          >
+            OK
+          </button>
+        </div>
+      )}
+
+      <div className="sticky top-0 z-10 -mx-4 md:-mx-6 px-4 md:px-6 py-3 mb-4 border-b border-line bg-bg">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+          <Stat label="Oggi" value={String(stats.todays)} compact />
+          <Stat label="Ospiti" value={String(stats.guests)} compact />
+          <Stat label="Da pagare" value={String(stats.pendingPay)} compact />
+          <Stat label="Dep. ok" value={String(stats.deposits)} compact />
+        </div>
+      </div>
+
       <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <Link href="/" className="text-sm text-muted hover:text-ink">
@@ -116,7 +167,21 @@ export function OpsDashboard({ operator, initialBookings }: Props) {
           </h1>
           <p className="text-muted mt-1">Ops · {operator.city}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 max-md:overflow-x-auto max-md:flex-nowrap max-md:pb-1">
+          <button
+            type="button"
+            onClick={() => void enablePush()}
+            className="rounded-full border border-line px-4 py-2.5 text-sm shrink-0"
+          >
+            Notifiche
+          </button>
+          <button
+            type="button"
+            onClick={() => void reload()}
+            className="rounded-full border border-line px-4 py-2.5 text-sm shrink-0"
+          >
+            Aggiorna
+          </button>
           <Link
             href="/ops/settings"
             className="rounded-full border border-line px-4 py-2 text-sm hover:border-sea/40"
@@ -161,14 +226,7 @@ export function OpsDashboard({ operator, initialBookings }: Props) {
         </div>
       </header>
 
-      <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Stat label="Prenotazioni oggi" value={String(stats.todays)} />
-        <Stat label="Ospiti oggi" value={String(stats.guests)} />
-        <Stat label="In attesa deposito" value={String(stats.pendingPay)} />
-        <Stat label="Depositi ok" value={String(stats.deposits)} />
-      </div>
-
-      <div className="mt-8 flex flex-wrap items-center gap-2 justify-between">
+      <div className="mt-6 flex flex-wrap items-center gap-2 justify-between">
         <div className="flex gap-2">
           {(
             [
@@ -181,7 +239,7 @@ export function OpsDashboard({ operator, initialBookings }: Props) {
               key={key}
               type="button"
               onClick={() => setFilter(key)}
-              className={`rounded-full px-4 py-2 text-sm border ${
+              className={`rounded-full px-4 py-2.5 text-sm border min-h-11 ${
                 filter === key
                   ? "bg-sea text-white border-sea"
                   : "border-line text-muted"
@@ -246,13 +304,13 @@ export function OpsDashboard({ operator, initialBookings }: Props) {
               </div>
             </div>
 
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-4 grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
               {STATUS_ACTIONS.filter((a) => a.status !== b.status).map((a) => (
                 <button
                   key={a.status}
                   type="button"
                   onClick={() => void setStatus(b.id, a.status)}
-                  className="rounded-full border border-line px-3 py-1.5 text-xs hover:border-sea/40"
+                  className="rounded-full border border-line px-3 py-2.5 text-sm min-h-11 hover:border-sea/40"
                 >
                   {a.label}
                 </button>
@@ -271,7 +329,7 @@ export function OpsDashboard({ operator, initialBookings }: Props) {
                   )}
                   target="_blank"
                   rel="noreferrer"
-                  className="rounded-full border border-warn/40 px-3 py-1.5 text-xs text-warn hover:bg-warn/10"
+                  className="rounded-full border border-warn/40 px-3 py-2.5 text-sm text-warn min-h-11 flex items-center justify-center hover:bg-warn/10"
                 >
                   Chiedi deposito
                 </a>
@@ -283,7 +341,7 @@ export function OpsDashboard({ operator, initialBookings }: Props) {
                 )}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded-full border border-[#25D366]/40 px-3 py-1.5 text-xs text-[#128C7E] hover:bg-[#25D366]/10"
+                className="rounded-full border border-[#25D366]/40 px-3 py-2.5 text-sm text-[#128C7E] min-h-11 flex items-center justify-center hover:bg-[#25D366]/10"
               >
                 WhatsApp ospite
               </a>
@@ -295,11 +353,23 @@ export function OpsDashboard({ operator, initialBookings }: Props) {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({
+  label,
+  value,
+  compact,
+}: {
+  label: string;
+  value: string;
+  compact?: boolean;
+}) {
   return (
-    <div className="border border-line bg-surface p-4">
-      <p className="text-xs uppercase tracking-[0.12em] text-muted">{label}</p>
-      <p className="font-display text-3xl mt-1">{value}</p>
+    <div className={`border border-line bg-surface ${compact ? "p-2.5" : "p-4"}`}>
+      <p className="text-[10px] md:text-xs uppercase tracking-[0.12em] text-muted">
+        {label}
+      </p>
+      <p className={`font-display mt-0.5 ${compact ? "text-2xl" : "text-3xl"}`}>
+        {value}
+      </p>
     </div>
   );
 }
