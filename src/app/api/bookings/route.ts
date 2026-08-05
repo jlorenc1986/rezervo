@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
+import { notifyOperatorNewBooking } from "@/lib/notify";
 import {
   createBooking,
   getBookingsForOperator,
@@ -55,6 +56,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Campi obbligatori mancanti" }, { status: 400 });
   }
 
+  const service = await getService(body.serviceId);
+
   const result = await createBooking({
     operatorId: operator.id,
     serviceId: body.serviceId,
@@ -70,6 +73,23 @@ export async function POST(request: Request) {
 
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: 409 });
+  }
+
+  const origin = new URL(request.url).origin;
+  const serviceName = service?.name ?? "Tour";
+
+  const notify = () =>
+    notifyOperatorNewBooking({
+      operator,
+      booking: result.booking,
+      serviceName,
+      appOrigin: origin,
+    });
+
+  try {
+    after(() => notify());
+  } catch {
+    void notify();
   }
 
   return NextResponse.json({ booking: result.booking }, { status: 201 });

@@ -23,6 +23,7 @@ export type Operator = {
   depositIban: string;
   depositRevolutLink: string;
   depositWiseLink: string;
+  notificationEmail: string;
 };
 
 export type Service = {

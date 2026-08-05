@@ -28,6 +28,7 @@ export function mapOperator(row: OperatorRow): Operator {
     depositIban: row.depositIban,
     depositRevolutLink: row.depositRevolutLink,
     depositWiseLink: row.depositWiseLink,
+    notificationEmail: row.notificationEmail,
   };
 }
 

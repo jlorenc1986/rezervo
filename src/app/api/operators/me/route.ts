@@ -60,6 +60,7 @@ export async function POST(request: Request) {
     tagline: body.tagline,
     depositNote: body.depositNote,
     locale: body.locale,
+    notificationEmail: user.email ?? "",
   });
 
   if (!created.ok) {
@@ -98,6 +99,7 @@ export async function PATCH(request: Request) {
     depositIban?: string;
     depositRevolutLink?: string;
     depositWiseLink?: string;
+    notificationEmail?: string;
   };
 
   const updated = await updateOperatorDepositSettings({
@@ -106,6 +108,7 @@ export async function PATCH(request: Request) {
     depositIban: body.depositIban,
     depositRevolutLink: body.depositRevolutLink,
     depositWiseLink: body.depositWiseLink,
+    notificationEmail: body.notificationEmail,
   });
 
   if (!updated) {

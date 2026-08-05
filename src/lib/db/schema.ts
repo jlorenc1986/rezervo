@@ -39,6 +39,7 @@ export const operators = pgTable("operators", {
   depositIban: text("deposit_iban").notNull().default(""),
   depositRevolutLink: text("deposit_revolut_link").notNull().default(""),
   depositWiseLink: text("deposit_wise_link").notNull().default(""),
+  notificationEmail: text("notification_email").notNull().default(""),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

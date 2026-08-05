@@ -16,6 +16,7 @@ export const DEMO_OPERATOR: Operator = {
   depositIban: "",
   depositRevolutLink: "",
   depositWiseLink: "",
+  notificationEmail: "",
 };
 
 export const DEMO_SERVICES: Service[] = [
