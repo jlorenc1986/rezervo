@@ -15,6 +15,7 @@ type BookingRow = InferSelectModel<typeof bookings>;
 export function mapOperator(row: OperatorRow): Operator {
   return {
     id: row.id,
+    authUserId: row.authUserId,
     slug: row.slug,
     name: row.name,
     tagline: row.tagline,

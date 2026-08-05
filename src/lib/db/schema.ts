@@ -26,6 +26,7 @@ export const bookingSourceEnum = pgEnum("booking_source", [
 
 export const operators = pgTable("operators", {
   id: text("id").primaryKey(),
+  authUserId: text("auth_user_id").unique(),
   slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
   tagline: text("tagline").notNull().default(""),

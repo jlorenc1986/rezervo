@@ -52,7 +52,7 @@ If any of these five fails → **do not hand it over** without sitting next to t
 ## Suggested build order
 
 1. ~~Deploy + database~~ → **Postgres (Supabase) + Railway config done**  
-2. Auth + operator/service onboarding  
+2. ~~Auth + operator/service onboarding~~ → **in progress / this PR**  
 3. Deposit (instructions + statuses + optional Payment Link)  
 4. Mobile ops + new-booking notifications  
 5. No-show cutoff + export  

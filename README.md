@@ -68,8 +68,14 @@ npm run db:seed
 ## Railway deploy
 
 1. Create a Railway service from this repo (Nixpacks / Next.js).
-2. Set `DATABASE_URL` to your **Supabase** pooler URI.
-3. Deploy, then run once against that DB:
+2. Set env vars:
+   - `DATABASE_URL` — Supabase Transaction pooler URI
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+3. In Supabase Auth → URL configuration, add:
+   - Site URL: your Railway domain
+   - Redirect: `https://YOUR_DOMAIN/auth/callback`
+4. Deploy, then run once against that DB:
 
 ```bash
 DATABASE_URL='…supabase…' npm run db:migrate
@@ -77,6 +83,11 @@ DATABASE_URL='…supabase…' npm run db:seed
 ```
 
 `railway.toml` healthcheck hits `/api/health`.
+
+## Auth & onboarding
+
+Operators sign up at `/signup`, then complete `/onboarding` (business name, slug, WhatsApp, optional first service).  
+`/ops` and `/ops/services` require a Supabase session. Public booking stays open at `/book/[slug]`.
 
 ## CI
 
