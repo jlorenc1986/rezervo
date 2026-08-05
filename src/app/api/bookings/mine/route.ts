@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { getAuthUser, getOperatorForUser } from "@/lib/auth";
-import { getBookingsForOperator, getService } from "@/lib/store";
+import { todayIso } from "@/lib/format";
+import {
+  applyNoShowCutoffForOperator,
+  getBookingsForOperator,
+  getService,
+} from "@/lib/store";
 
 export async function GET() {
   const user = await getAuthUser();
@@ -9,6 +14,13 @@ export async function GET() {
   if (!operator) {
     return NextResponse.json({ error: "Operator not found" }, { status: 404 });
   }
+
+  const cutoffHours = Number(process.env.NO_SHOW_CUTOFF_HOURS ?? "12");
+  await applyNoShowCutoffForOperator({
+    operatorId: operator.id,
+    today: todayIso(),
+    cutoffHours: Number.isFinite(cutoffHours) ? cutoffHours : 12,
+  });
 
   const bookings = await getBookingsForOperator(operator.id);
   const enriched = await Promise.all(
