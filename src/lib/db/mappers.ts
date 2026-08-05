@@ -25,6 +25,9 @@ export function mapOperator(row: OperatorRow): Operator {
     currency: row.currency,
     locale: row.locale,
     depositNote: row.depositNote,
+    depositIban: row.depositIban,
+    depositRevolutLink: row.depositRevolutLink,
+    depositWiseLink: row.depositWiseLink,
   };
 }
 

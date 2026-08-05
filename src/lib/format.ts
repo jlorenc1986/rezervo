@@ -1,4 +1,5 @@
-import type { BookingStatus, Locale, Service } from "./types";
+import type { BookingStatus, Locale, Operator, Service } from "./types";
+import { buildDepositInstructions } from "./deposit";
 
 export function serviceLabel(service: Service, locale: Locale): string {
   if (locale === "it") return service.nameIt;
@@ -79,13 +80,22 @@ export function guestConfirmMessage(opts: {
   depositEur: number;
   meetingPoint: string;
   locale: Locale;
+  operator?: Operator;
 }) {
   const deposit = formatMoney(opts.depositEur);
+  const paymentLines =
+    opts.operator && buildDepositInstructions(opts.operator, opts.depositEur, opts.locale)
+      .methods.map((m) => `${m.label}: ${m.value}`)
+      .join(" · ");
+
   if (opts.locale === "en") {
-    return `Hi ${opts.guestName}, booking ${opts.code} for ${opts.serviceName} on ${opts.date} at ${opts.time}. Deposit ${deposit}. Meeting: ${opts.meetingPoint}`;
+    const base = `Hi ${opts.guestName}, booking ${opts.code} for ${opts.serviceName} on ${opts.date} at ${opts.time}. Deposit ${deposit}. Meeting: ${opts.meetingPoint}`;
+    return paymentLines ? `${base}. Pay via: ${paymentLines}` : base;
   }
   if (opts.locale === "sq") {
-    return `Përshëndetje ${opts.guestName}, rezervimi ${opts.code} për ${opts.serviceName} më ${opts.date} ora ${opts.time}. Depozita ${deposit}. Takimi: ${opts.meetingPoint}`;
+    const base = `Përshëndetje ${opts.guestName}, rezervimi ${opts.code} për ${opts.serviceName} më ${opts.date} ora ${opts.time}. Depozita ${deposit}. Takimi: ${opts.meetingPoint}`;
+    return paymentLines ? `${base}. Paguani: ${paymentLines}` : base;
   }
-  return `Ciao ${opts.guestName}, prenotazione ${opts.code} per ${opts.serviceName} il ${opts.date} alle ${opts.time}. Deposito ${deposit}. Meeting: ${opts.meetingPoint}`;
+  const base = `Ciao ${opts.guestName}, prenotazione ${opts.code} per ${opts.serviceName} il ${opts.date} alle ${opts.time}. Deposito ${deposit}. Meeting: ${opts.meetingPoint}`;
+  return paymentLines ? `${base}. Paga con: ${paymentLines}` : base;
 }

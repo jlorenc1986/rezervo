@@ -20,6 +20,9 @@ export type Operator = {
   currency: "EUR" | "ALL";
   locale: Locale;
   depositNote: string;
+  depositIban: string;
+  depositRevolutLink: string;
+  depositWiseLink: string;
 };
 
 export type Service = {

@@ -134,3 +134,29 @@ export async function deleteServiceForOperator(
     .returning();
   return deleted.length > 0;
 }
+
+export type UpdateDepositSettingsInput = {
+  operatorId: string;
+  depositNote?: string;
+  depositIban?: string;
+  depositRevolutLink?: string;
+  depositWiseLink?: string;
+};
+
+export async function updateOperatorDepositSettings(
+  input: UpdateDepositSettingsInput,
+): Promise<Operator | null> {
+  const db = getDb();
+  const updated = await db
+    .update(operators)
+    .set({
+      depositNote: input.depositNote?.trim() ?? "",
+      depositIban: input.depositIban?.trim() ?? "",
+      depositRevolutLink: input.depositRevolutLink?.trim() ?? "",
+      depositWiseLink: input.depositWiseLink?.trim() ?? "",
+      updatedAt: new Date(),
+    })
+    .where(eq(operators.id, input.operatorId))
+    .returning();
+  return updated[0] ? mapOperator(updated[0]) : null;
+}

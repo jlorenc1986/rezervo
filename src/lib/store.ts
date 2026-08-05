@@ -226,6 +226,9 @@ export async function resetDemoStore(): Promise<{
     currency: DEMO_OPERATOR.currency,
     locale: DEMO_OPERATOR.locale,
     depositNote: DEMO_OPERATOR.depositNote,
+    depositIban: DEMO_OPERATOR.depositIban,
+    depositRevolutLink: DEMO_OPERATOR.depositRevolutLink,
+    depositWiseLink: DEMO_OPERATOR.depositWiseLink,
   });
 
   await db.insert(services).values(

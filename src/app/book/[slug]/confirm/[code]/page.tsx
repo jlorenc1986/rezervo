@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { DepositInstructionsCard } from "@/components/DepositInstructionsCard";
+import { buildDepositInstructions } from "@/lib/deposit";
 import {
   formatDateLabel,
   formatMoney,
@@ -29,6 +31,12 @@ export default async function ConfirmPage({
   if (!service) notFound();
 
   const serviceName = serviceLabel(service, booking.guestLocale);
+  const depositInstructions = buildDepositInstructions(
+    operator,
+    booking.depositEur,
+    booking.guestLocale,
+  );
+
   const wa = whatsappLink(
     operator.whatsapp,
     guestConfirmMessage({
@@ -40,6 +48,7 @@ export default async function ConfirmPage({
       depositEur: booking.depositEur,
       meetingPoint: service.meetingPoint,
       locale: booking.guestLocale,
+      operator,
     }),
   );
 
@@ -55,8 +64,7 @@ export default async function ConfirmPage({
         </p>
         <h1 className="font-display text-4xl mt-2">{booking.code}</h1>
         <p className="mt-3 text-muted">
-          {statusLabel(booking.status, booking.guestLocale)} ·{" "}
-          {operator.name}
+          {statusLabel(booking.status, booking.guestLocale)} · {operator.name}
         </p>
 
         <div className="mt-8 border border-line bg-surface p-5 space-y-3">
@@ -71,22 +79,24 @@ export default async function ConfirmPage({
           <Row label="Meeting" value={service.meetingPoint} />
         </div>
 
+        <DepositInstructionsCard instructions={depositInstructions} />
+
         <a
           href={wa}
           target="_blank"
           rel="noreferrer"
           className="mt-8 flex w-full items-center justify-center rounded-full bg-[#25D366] py-3 font-medium text-white hover:brightness-105 transition"
         >
-          Conferma su WhatsApp
+          Conferma deposito su WhatsApp
         </a>
         <p className="mt-3 text-sm text-muted text-center leading-relaxed">
-          Invia il messaggio all&apos;operatore per il deposito. Dopo il pagamento
-          lo stato passa a &quot;Deposito ok&quot; dalla dashboard.
+          Invia il messaggio con codice e importo. L&apos;operatore segna
+          &quot;Deposito ok&quot; dalla dashboard quando riceve il pagamento.
         </p>
 
         <div className="mt-10 flex justify-center gap-4 text-sm">
-          <Link href="/ops" className="text-sea underline-offset-2 hover:underline">
-            Dashboard ops
+          <Link href="/login" className="text-sea underline-offset-2 hover:underline">
+            Operator login
           </Link>
           <Link href="/" className="text-muted hover:text-ink">
             Home
