@@ -1,7 +1,9 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { closeDb } from "@/lib/db/client";
+import { closeDb, getDb } from "@/lib/db/client";
+import { eq } from "drizzle-orm";
 import {
   createBooking,
+  applyNoShowCutoffForOperator,
   getAvailability,
   getBookingByCode,
   getOperatorBySlug,
@@ -9,6 +11,8 @@ import {
   updateBookingStatus,
 } from "@/lib/store";
 import { DEMO_OPERATOR } from "@/lib/seed";
+import { todayIso } from "@/lib/format";
+import { bookings } from "@/lib/db/schema";
 
 describe("booking store", () => {
   beforeAll(() => {
@@ -145,6 +149,75 @@ describe("booking store", () => {
     const slotsAfter = await getAvailability("svc_gjirokaster", open.date, 1);
     const after = slotsAfter.find((s) => s.time === open.time);
     expect(after?.remaining).toBe(remainingBefore);
+  });
+
+  it("marks old pending/confirmed bookings as no-show after cutoff", async () => {
+    const today = todayIso();
+    const cutoffHours = 12;
+    const old = new Date(Date.now() - (cutoffHours + 1) * 3600_000);
+
+    const pendingId = `bk_cutoff_pending_${Date.now()}`;
+    const depositPaidId = `bk_cutoff_deposit_${Date.now()}`;
+
+    const db = getDb();
+    await db.insert(bookings).values([
+      {
+        id: pendingId,
+        code: `RZ-CUT-P-${Date.now()}`,
+        operatorId: DEMO_OPERATOR.id,
+        serviceId: "svc_gjirokaster",
+        date: today,
+        time: "07:45",
+        guestName: "Old pending",
+        guestPhone: "+355 69 123 4567",
+        guestLocale: "en",
+        guests: 1,
+        status: "confirmed",
+        totalEur: "100.00",
+        depositEur: "30.00",
+        notes: "",
+        source: "link",
+        createdAt: old,
+        updatedAt: old,
+      },
+      {
+        id: depositPaidId,
+        code: `RZ-CUT-D-${Date.now()}`,
+        operatorId: DEMO_OPERATOR.id,
+        serviceId: "svc_gjirokaster",
+        date: today,
+        time: "07:45",
+        guestName: "Old deposit_paid",
+        guestPhone: "+355 69 999 4567",
+        guestLocale: "en",
+        guests: 1,
+        status: "deposit_paid",
+        totalEur: "120.00",
+        depositEur: "36.00",
+        notes: "",
+        source: "link",
+        createdAt: old,
+        updatedAt: old,
+      },
+    ]);
+
+    await applyNoShowCutoffForOperator({
+      operatorId: DEMO_OPERATOR.id,
+      today,
+      cutoffHours,
+    });
+
+    const [pendingRow, depositPaidRow] = await Promise.all([
+      db.select().from(bookings).where(eq(bookings.id, pendingId)).limit(1),
+      db
+        .select()
+        .from(bookings)
+        .where(eq(bookings.id, depositPaidId))
+        .limit(1),
+    ]);
+
+    expect(pendingRow[0]?.status).toBe("no_show");
+    expect(depositPaidRow[0]?.status).toBe("deposit_paid");
   });
 });
 

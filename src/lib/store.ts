@@ -202,6 +202,31 @@ export async function updateBookingStatus(
   return updated[0] ? mapBooking(updated[0]) : null;
 }
 
+export async function applyNoShowCutoffForOperator(opts: {
+  operatorId: string;
+  today: string;
+  cutoffHours: number;
+}): Promise<number> {
+  const cutoffMs = Math.max(0, opts.cutoffHours * 60 * 60 * 1000);
+  const cutoffDate = new Date(Date.now() - cutoffMs);
+
+  const db = getDb();
+  const updated = await db
+    .update(bookings)
+    .set({ status: "no_show", updatedAt: new Date() })
+    .where(
+      and(
+        eq(bookings.operatorId, opts.operatorId),
+        eq(bookings.date, opts.today),
+        sql`${bookings.status} in ('pending', 'confirmed')`,
+        sql`${bookings.updatedAt} < ${cutoffDate.toISOString()}`,
+      ),
+    )
+    .returning({ id: bookings.id });
+
+  return updated.length;
+}
+
 export async function resetDemoStore(): Promise<{
   operators: number;
   services: number;

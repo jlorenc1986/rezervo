@@ -49,6 +49,7 @@ export function OpsDashboard({ operator, initialBookings }: Props) {
   const [filter, setFilter] = useState<"today" | "all" | "pending">("today");
   const [shareCopied, setShareCopied] = useState(false);
   const [newAlert, setNewAlert] = useState<string | null>(null);
+  const [exportBusy, setExportBusy] = useState(false);
   const knownIdsRef = useRef(new Set(initialBookings.map((b) => b.id)));
 
   const reload = useCallback(async () => {
@@ -117,6 +118,36 @@ export function OpsDashboard({ operator, initialBookings }: Props) {
     await reload();
   }
 
+  async function exportCsv(scope: "today" | "month") {
+    if (exportBusy) return;
+    setExportBusy(true);
+    try {
+      const res = await fetch(`/api/bookings/export?scope=${scope}`);
+      if (!res.ok) {
+        setNewAlert("Export CSV fallito");
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download =
+        scope === "today"
+          ? `rezervo_bookings_${today}.csv`
+          : `rezervo_bookings_${today.slice(0, 7)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      setNewAlert("Export CSV fallito");
+    } finally {
+      setExportBusy(false);
+    }
+  }
+
   async function copyBookingLink() {
     const url = `${window.location.origin}/book/${operator.slug}`;
     await navigator.clipboard.writeText(url);
@@ -181,6 +212,22 @@ export function OpsDashboard({ operator, initialBookings }: Props) {
             className="rounded-full border border-line px-4 py-2.5 text-sm shrink-0"
           >
             Aggiorna
+          </button>
+          <button
+            type="button"
+            onClick={() => void exportCsv("today")}
+            disabled={exportBusy}
+            className="rounded-full border border-line px-4 py-2.5 text-sm shrink-0 hover:border-sea/40 disabled:opacity-50"
+          >
+            Export oggi
+          </button>
+          <button
+            type="button"
+            onClick={() => void exportCsv("month")}
+            disabled={exportBusy}
+            className="rounded-full border border-line px-4 py-2.5 text-sm shrink-0 hover:border-sea/40 disabled:opacity-50"
+          >
+            Export mese
           </button>
           <Link
             href="/ops/settings"
