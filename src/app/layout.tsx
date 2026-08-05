@@ -18,7 +18,11 @@ export const metadata: Metadata = {
     "MVP per tour, transfer e boat in Albania: capacità, deposito e conferma in un link.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html
       lang="it"
