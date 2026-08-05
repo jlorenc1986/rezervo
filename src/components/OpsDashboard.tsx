@@ -252,13 +252,13 @@ export function OpsDashboard({ operator, initialBookings }: Props) {
             href={waShare}
             target="_blank"
             rel="noreferrer"
-            className="rounded-full bg-[#25D366] px-4 py-2 text-sm text-white"
+            className="rounded-full bg-[#25D366] px-4 py-2.5 text-sm font-medium text-white hover:brightness-105"
           >
             Invia link WhatsApp
           </a>
           <Link
             href={`/book/${operator.slug}`}
-            className="rounded-full bg-sea px-4 py-2 text-sm text-white hover:bg-sea-deep"
+            className="rounded-full bg-sea px-4 py-2.5 text-sm font-medium text-white hover:bg-sea-deep"
           >
             Vista cliente
           </Link>
