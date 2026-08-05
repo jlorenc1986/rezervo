@@ -10,6 +10,7 @@ import {
   todayIso,
   whatsappLink,
 } from "@/lib/format";
+import { depositReminderMessage } from "@/lib/deposit";
 
 export type EnrichedBooking = Booking & { serviceName: string };
 
@@ -116,6 +117,12 @@ export function OpsDashboard({ operator, initialBookings }: Props) {
           <p className="text-muted mt-1">Ops · {operator.city}</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Link
+            href="/ops/settings"
+            className="rounded-full border border-line px-4 py-2 text-sm hover:border-sea/40"
+          >
+            Deposito
+          </Link>
           <Link
             href="/ops/services"
             className="rounded-full border border-line px-4 py-2 text-sm hover:border-sea/40"
@@ -250,6 +257,25 @@ export function OpsDashboard({ operator, initialBookings }: Props) {
                   {a.label}
                 </button>
               ))}
+              {b.status === "pending" && (
+                <a
+                  href={whatsappLink(
+                    b.guestPhone,
+                    depositReminderMessage({
+                      guestName: b.guestName,
+                      code: b.code,
+                      depositEur: b.depositEur,
+                      operator,
+                      locale: b.guestLocale,
+                    }),
+                  )}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-full border border-warn/40 px-3 py-1.5 text-xs text-warn hover:bg-warn/10"
+                >
+                  Chiedi deposito
+                </a>
+              )}
               <a
                 href={whatsappLink(
                   b.guestPhone,

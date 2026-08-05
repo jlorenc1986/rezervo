@@ -87,7 +87,7 @@ DATABASE_URL='…supabase…' npm run db:seed
 ## Auth & onboarding
 
 Operators sign up at `/signup`, then complete `/onboarding` (business name, slug, WhatsApp, optional first service).  
-`/ops` and `/ops/services` require a Supabase session. Public booking stays open at `/book/[slug]`.
+`/ops` and `/ops/services` require a Supabase session. Configure deposit payment at `/ops/settings`. Public booking stays open at `/book/[slug]`.
 
 ## CI
 

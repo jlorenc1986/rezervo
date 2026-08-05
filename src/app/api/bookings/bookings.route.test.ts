@@ -1,9 +1,10 @@
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   POST as createBookingRoute,
   GET as listBookingsRoute,
 } from "@/app/api/bookings/route";
 import { PATCH as patchBookingRoute } from "@/app/api/bookings/[id]/route";
+import * as auth from "@/lib/auth";
 import { closeDb } from "@/lib/db/client";
 import { getAvailability, resetDemoStore } from "@/lib/store";
 
@@ -34,6 +35,7 @@ describe("bookings API", () => {
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     await closeDb();
   });
 
@@ -48,6 +50,8 @@ describe("bookings API", () => {
   });
 
   it("rejects unauthenticated status updates", async () => {
+    vi.spyOn(auth, "getAuthUser").mockResolvedValue(null);
+
     const slots = await getAvailability("svc_gjirokaster", nextWeekday(2), 1);
     const open = slots.find((s) => s.remaining > 0)!;
 

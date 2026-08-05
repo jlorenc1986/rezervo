@@ -36,6 +36,9 @@ export const operators = pgTable("operators", {
   currency: currencyEnum("currency").notNull().default("EUR"),
   locale: localeEnum("locale").notNull().default("it"),
   depositNote: text("deposit_note").notNull().default(""),
+  depositIban: text("deposit_iban").notNull().default(""),
+  depositRevolutLink: text("deposit_revolut_link").notNull().default(""),
+  depositWiseLink: text("deposit_wise_link").notNull().default(""),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

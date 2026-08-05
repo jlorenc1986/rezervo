@@ -3,6 +3,7 @@ import { getAuthUser, getOperatorForUser } from "@/lib/auth";
 import {
   createOperatorForUser,
   createServiceForOperator,
+  updateOperatorDepositSettings,
 } from "@/lib/operators";
 import type { Locale } from "@/lib/types";
 
@@ -80,4 +81,35 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ operator: created.operator }, { status: 201 });
+}
+
+export async function PATCH(request: Request) {
+  const user = await getAuthUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const operator = await getOperatorForUser(user.id);
+  if (!operator) {
+    return NextResponse.json({ error: "Operator not found" }, { status: 404 });
+  }
+
+  const body = (await request.json()) as {
+    depositNote?: string;
+    depositIban?: string;
+    depositRevolutLink?: string;
+    depositWiseLink?: string;
+  };
+
+  const updated = await updateOperatorDepositSettings({
+    operatorId: operator.id,
+    depositNote: body.depositNote,
+    depositIban: body.depositIban,
+    depositRevolutLink: body.depositRevolutLink,
+    depositWiseLink: body.depositWiseLink,
+  });
+
+  if (!updated) {
+    return NextResponse.json({ error: "Update failed" }, { status: 500 });
+  }
+  return NextResponse.json({ operator: updated });
 }

@@ -13,6 +13,9 @@ export const DEMO_OPERATOR: Operator = {
   locale: "it",
   depositNote:
     "Deposito 30% via Wise/Revolut o contanti al meeting point. Il resto il giorno del tour.",
+  depositIban: "",
+  depositRevolutLink: "",
+  depositWiseLink: "",
 };
 
 export const DEMO_SERVICES: Service[] = [
