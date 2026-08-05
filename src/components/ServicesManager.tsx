@@ -100,7 +100,7 @@ export function ServicesManager({
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="mt-1 w-full border border-line bg-surface px-3 py-2"
+            className="field mt-1"
           />
         </label>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -112,7 +112,7 @@ export function ServicesManager({
               step="0.01"
               value={priceEur}
               onChange={(e) => setPriceEur(Number(e.target.value))}
-              className="mt-1 w-full border border-line bg-surface px-3 py-2"
+              className="field mt-1"
             />
           </label>
           <label className="block">
@@ -122,7 +122,7 @@ export function ServicesManager({
               min={1}
               value={capacity}
               onChange={(e) => setCapacity(Number(e.target.value))}
-              className="mt-1 w-full border border-line bg-surface px-3 py-2"
+              className="field mt-1"
             />
           </label>
         </div>
@@ -131,14 +131,14 @@ export function ServicesManager({
           <input
             value={meetingPoint}
             onChange={(e) => setMeetingPoint(e.target.value)}
-            className="mt-1 w-full border border-line bg-surface px-3 py-2"
+            className="field mt-1"
           />
         </label>
         {error && <p className="text-sm text-danger">{error}</p>}
         <button
           type="submit"
           disabled={loading}
-          className="rounded-full bg-sea px-5 py-2.5 text-white disabled:opacity-40"
+          className="rounded-full bg-sea px-5 py-3 min-h-11 text-white disabled:opacity-40"
         >
           {loading ? "…" : "Add service"}
         </button>

@@ -120,16 +120,17 @@ export function BookingForm({ operator, services, availability }: Props) {
   const deposit = service
     ? Math.round(((total * service.depositPercent) / 100) * 100) / 100
     : 0;
+  const canSubmit = Boolean(date && time && guestName && guestPhone);
 
   return (
-    <form onSubmit={onSubmit} className="space-y-6">
+    <form onSubmit={onSubmit} className="space-y-6 pb-28 md:pb-0">
       <div className="flex gap-2">
         {(["it", "en", "sq"] as Locale[]).map((l) => (
           <button
             key={l}
             type="button"
             onClick={() => setLocale(l)}
-            className={`rounded-full px-3 py-1 text-sm border transition ${
+            className={`rounded-full px-3 py-2 text-sm border min-h-11 transition ${
               locale === l
                 ? "bg-sea text-white border-sea"
                 : "border-line text-muted hover:border-sea/40"
@@ -195,13 +196,13 @@ export function BookingForm({ operator, services, availability }: Props) {
                       setDate(d);
                       setTime("");
                     }}
-                    className={`rounded-full px-3 py-2 text-sm border transition ${
+                    className={`rounded-full px-3 py-2.5 text-sm border min-h-11 transition ${
                       date === d
                         ? "bg-sea text-white border-sea"
                         : "border-line bg-surface"
                     }`}
                   >
-                    {d.slice(5)} · {rem} left
+                    {d.slice(5)} · {rem}
                   </button>
                 );
               })}
@@ -217,7 +218,7 @@ export function BookingForm({ operator, services, availability }: Props) {
                     key={slot.time}
                     type="button"
                     onClick={() => setTime(slot.time)}
-                    className={`rounded-full px-4 py-2 text-sm border transition ${
+                    className={`rounded-full px-4 py-2.5 text-sm border min-h-11 transition ${
                       time === slot.time
                         ? "bg-accent text-white border-accent"
                         : "border-line bg-surface"
@@ -241,7 +242,7 @@ export function BookingForm({ operator, services, availability }: Props) {
             max={service?.capacity ?? 12}
             value={guests}
             onChange={(e) => setGuests(Number(e.target.value))}
-            className="mt-1 w-full border border-line bg-surface px-3 py-2"
+            className="field mt-1"
             required
           />
         </label>
@@ -250,7 +251,7 @@ export function BookingForm({ operator, services, availability }: Props) {
           <input
             value={guestName}
             onChange={(e) => setGuestName(e.target.value)}
-            className="mt-1 w-full border border-line bg-surface px-3 py-2"
+            className="field mt-1"
             required
           />
         </label>
@@ -259,7 +260,7 @@ export function BookingForm({ operator, services, availability }: Props) {
           <input
             value={guestPhone}
             onChange={(e) => setGuestPhone(e.target.value)}
-            className="mt-1 w-full border border-line bg-surface px-3 py-2"
+            className="field mt-1"
             placeholder="+39 … / +355 …"
             required
           />
@@ -270,7 +271,7 @@ export function BookingForm({ operator, services, availability }: Props) {
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
-            className="mt-1 w-full border border-line bg-surface px-3 py-2"
+            className="field mt-1 min-h-[5.5rem]"
           />
         </label>
       </div>
@@ -292,13 +293,15 @@ export function BookingForm({ operator, services, availability }: Props) {
 
       {error && <p className="text-danger text-sm">{error}</p>}
 
-      <button
-        type="submit"
-        disabled={loading || !date || !time || !guestName || !guestPhone}
-        className="w-full rounded-full bg-sea py-3 text-white font-medium disabled:opacity-40 hover:bg-sea-deep transition"
-      >
-        {loading ? "…" : copy.submit}
-      </button>
+      <div className="fixed bottom-0 inset-x-0 z-20 border-t border-line bg-bg/95 backdrop-blur-sm p-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:static md:border-0 md:bg-transparent md:backdrop-blur-none md:p-0">
+        <button
+          type="submit"
+          disabled={loading || !canSubmit}
+          className="w-full rounded-full bg-sea py-3.5 min-h-12 text-white font-medium disabled:opacity-40 hover:bg-sea-deep transition"
+        >
+          {loading ? "…" : copy.submit}
+        </button>
+      </div>
     </form>
   );
 }

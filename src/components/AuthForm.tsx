@@ -71,7 +71,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="mt-1 w-full border border-line bg-surface px-3 py-2"
+          className="field mt-1"
         />
       </label>
       <label className="block">
@@ -82,7 +82,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
           minLength={6}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="mt-1 w-full border border-line bg-surface px-3 py-2"
+          className="field mt-1"
         />
       </label>
       {error && <p className="text-sm text-danger">{error}</p>}

@@ -61,7 +61,7 @@ export function DepositSettingsForm({ operator }: { operator: Operator }) {
           rows={3}
           value={depositNote}
           onChange={(e) => setDepositNote(e.target.value)}
-          className="mt-1 w-full border border-line bg-surface px-3 py-2"
+          className="field mt-1"
           placeholder="Pay within 24h. Balance on the day."
         />
       </label>
@@ -71,7 +71,7 @@ export function DepositSettingsForm({ operator }: { operator: Operator }) {
         <input
           value={depositIban}
           onChange={(e) => setDepositIban(e.target.value)}
-          className="mt-1 w-full border border-line bg-surface px-3 py-2 font-mono text-sm"
+          className="field mt-1 font-mono text-sm"
           placeholder="AL47 2121 1010 0000 0002 3569 8741"
         />
       </label>
@@ -81,7 +81,7 @@ export function DepositSettingsForm({ operator }: { operator: Operator }) {
         <input
           value={depositRevolutLink}
           onChange={(e) => setDepositRevolutLink(e.target.value)}
-          className="mt-1 w-full border border-line bg-surface px-3 py-2"
+          className="field mt-1"
           placeholder="https://revolut.me/yourname or @yourname"
         />
       </label>
@@ -92,7 +92,7 @@ export function DepositSettingsForm({ operator }: { operator: Operator }) {
           type="email"
           value={notificationEmail}
           onChange={(e) => setNotificationEmail(e.target.value)}
-          className="mt-1 w-full border border-line bg-surface px-3 py-2"
+          className="field mt-1"
           placeholder="you@example.com"
         />
         <p className="mt-1 text-xs text-muted">
@@ -106,7 +106,7 @@ export function DepositSettingsForm({ operator }: { operator: Operator }) {
         <input
           value={depositWiseLink}
           onChange={(e) => setDepositWiseLink(e.target.value)}
-          className="mt-1 w-full border border-line bg-surface px-3 py-2"
+          className="field mt-1"
           placeholder="https://wise.com/pay/me/..."
         />
       </label>
