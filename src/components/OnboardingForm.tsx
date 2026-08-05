@@ -71,14 +71,14 @@ export function OnboardingForm() {
           required
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="mt-1 w-full border border-line bg-surface px-3 py-2"
+          className="field mt-1"
           placeholder="Blue Ionian Tours"
         />
       </label>
 
       <label className="block">
         <span className="text-sm text-muted">Booking link slug</span>
-        <div className="mt-1 flex items-center gap-2 border border-line bg-surface px-3 py-2">
+        <div className="field mt-1 flex items-center gap-2 !min-h-11 py-0">
           <span className="text-muted text-sm shrink-0">/book/</span>
           <input
             required
@@ -87,7 +87,7 @@ export function OnboardingForm() {
               setSlugTouched(true);
               setSlug(e.target.value);
             }}
-            className="w-full bg-transparent outline-none"
+            className="w-full bg-transparent outline-none text-base min-h-11"
           />
         </div>
       </label>
@@ -99,7 +99,7 @@ export function OnboardingForm() {
             required
             value={city}
             onChange={(e) => setCity(e.target.value)}
-            className="mt-1 w-full border border-line bg-surface px-3 py-2"
+            className="field mt-1"
             placeholder="Saranda"
           />
         </label>
@@ -109,7 +109,7 @@ export function OnboardingForm() {
             required
             value={whatsapp}
             onChange={(e) => setWhatsapp(e.target.value)}
-            className="mt-1 w-full border border-line bg-surface px-3 py-2"
+            className="field mt-1"
             placeholder="35569…"
           />
         </label>
@@ -120,7 +120,7 @@ export function OnboardingForm() {
         <input
           value={tagline}
           onChange={(e) => setTagline(e.target.value)}
-          className="mt-1 w-full border border-line bg-surface px-3 py-2"
+          className="field mt-1"
         />
       </label>
 
@@ -131,7 +131,7 @@ export function OnboardingForm() {
           <input
             value={serviceName}
             onChange={(e) => setServiceName(e.target.value)}
-            className="mt-1 w-full border border-line bg-surface px-3 py-2"
+            className="field mt-1"
             placeholder="Ksamil boat trip"
           />
         </label>
@@ -144,7 +144,7 @@ export function OnboardingForm() {
               step="0.01"
               value={priceEur}
               onChange={(e) => setPriceEur(Number(e.target.value))}
-              className="mt-1 w-full border border-line bg-surface px-3 py-2"
+              className="field mt-1"
             />
           </label>
           <label className="block">
@@ -154,7 +154,7 @@ export function OnboardingForm() {
               min={1}
               value={capacity}
               onChange={(e) => setCapacity(Number(e.target.value))}
-              className="mt-1 w-full border border-line bg-surface px-3 py-2"
+              className="field mt-1"
             />
           </label>
         </div>

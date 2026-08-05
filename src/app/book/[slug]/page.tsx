@@ -37,23 +37,25 @@ export default async function BookPage({
   return (
     <main className="flex-1">
       <div className="sea-hero text-foam">
-        <div className="mx-auto max-w-xl px-6 py-10">
+        <div className="mx-auto max-w-xl px-4 md:px-6 py-8 md:py-10">
           <Link href="/" className="text-sm text-foam/70 hover:text-white">
             ← Rezervo
           </Link>
-          <p className="mt-6 font-display text-4xl text-white">{operator.name}</p>
+          <p className="mt-6 font-display text-3xl md:text-4xl text-white">
+            {operator.name}
+          </p>
           <p className="mt-2 text-foam/85">{operator.tagline}</p>
           <p className="mt-1 text-sm text-foam/60">{operator.city}</p>
         </div>
       </div>
 
-      <div className="mx-auto max-w-xl px-6 py-10">
+      <div className="mx-auto max-w-xl px-4 md:px-6 py-8 md:py-10">
         <BookingForm
           operator={operator}
           services={services}
           availability={availability}
         />
-        <p className="mt-8 text-sm text-muted leading-relaxed">
+        <p className="mt-8 mb-4 text-sm text-muted leading-relaxed">
           {operator.depositNote}
         </p>
       </div>

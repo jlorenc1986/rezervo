@@ -112,3 +112,26 @@
 .rise-delay-3 {
   animation-delay: 0.24s;
 }
+
+/* Touch-friendly form controls (avoids iOS input zoom) */
+.field {
+  display: block;
+  width: 100%;
+  min-height: 2.75rem;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  padding: 0.625rem 0.75rem;
+  font-size: 1rem;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.field:focus {
+  outline: 2px solid color-mix(in oklab, var(--accent) 55%, transparent);
+  outline-offset: 1px;
+}
+
+textarea.field {
+  min-height: 5.5rem;
+  resize: vertical;
+}
