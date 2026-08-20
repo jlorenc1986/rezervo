@@ -8,6 +8,7 @@ import {
   getBookingByCode,
   getOperatorBySlug,
   resetDemoStore,
+  updateBooking,
   updateBookingStatus,
 } from "@/lib/store";
 import { DEMO_OPERATOR } from "@/lib/seed";
@@ -151,12 +152,83 @@ describe("booking store", () => {
     expect(after?.remaining).toBe(remainingBefore);
   });
 
-  it("marks old pending/confirmed bookings as no-show after cutoff", async () => {
-    const today = todayIso();
+  it("edits guests and recalculates totals", async () => {
+    const slots = await getAvailability("svc_gjirokaster", nextWeekday(2), 1);
+    const open = slots.find((s) => s.remaining > 1)!;
+    const created = await createBooking({
+      operatorId: DEMO_OPERATOR.id,
+      serviceId: "svc_gjirokaster",
+      date: open.date,
+      time: open.time,
+      guestName: "Edit Me",
+      guestPhone: "+39 340 2222222",
+      guestLocale: "it",
+      guests: 2,
+    });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+
+    const updated = await updateBooking(created.booking.id, {
+      guests: 1,
+      guestPhone: "+39 340 9999999",
+    });
+    expect(updated.ok).toBe(true);
+    if (!updated.ok) return;
+    expect(updated.booking.guests).toBe(1);
+    expect(updated.booking.totalEur).toBe(55);
+    expect(updated.booking.depositEur).toBe(16.5);
+    expect(updated.booking.guestPhone).toBe("+39 340 9999999");
+    expect(updated.booking.code).toBe(created.booking.code);
+    expect(updated.booking.status).toBe("pending");
+  });
+
+  it("rejects moving onto a full slot", async () => {
+    const tue = await getAvailability("svc_gjirokaster", nextWeekday(2), 1);
+    const thu = await getAvailability("svc_gjirokaster", nextWeekday(4), 1);
+    const tueOpen = tue.find((s) => s.remaining > 0)!;
+    const thuOpen = thu.find((s) => s.remaining > 0)!;
+
+    const filler = await createBooking({
+      operatorId: DEMO_OPERATOR.id,
+      serviceId: "svc_gjirokaster",
+      date: tueOpen.date,
+      time: tueOpen.time,
+      guestName: "Fills Tuesday",
+      guestPhone: "+355 69 0000003",
+      guestLocale: "en",
+      guests: tueOpen.remaining,
+    });
+    expect(filler.ok).toBe(true);
+
+    const mover = await createBooking({
+      operatorId: DEMO_OPERATOR.id,
+      serviceId: "svc_gjirokaster",
+      date: thuOpen.date,
+      time: thuOpen.time,
+      guestName: "Thursday Guest",
+      guestPhone: "+355 69 0000004",
+      guestLocale: "en",
+      guests: 1,
+    });
+    expect(mover.ok).toBe(true);
+    if (!mover.ok) return;
+
+    const moved = await updateBooking(mover.booking.id, {
+      date: tueOpen.date,
+      time: tueOpen.time,
+    });
+    expect(moved.ok).toBe(false);
+    if (moved.ok) return;
+    expect(moved.error).toMatch(/Posti insufficienti/);
+  });
+
+  it("cancels stale pending bookings on any date after cutoff", async () => {
+    const future = nextWeekday(2);
     const cutoffHours = 12;
     const old = new Date(Date.now() - (cutoffHours + 1) * 3600_000);
 
     const pendingId = `bk_cutoff_pending_${Date.now()}`;
+    const confirmedId = `bk_cutoff_confirmed_${Date.now()}`;
     const depositPaidId = `bk_cutoff_deposit_${Date.now()}`;
 
     const db = getDb();
@@ -166,10 +238,29 @@ describe("booking store", () => {
         code: `RZ-CUT-P-${Date.now()}`,
         operatorId: DEMO_OPERATOR.id,
         serviceId: "svc_gjirokaster",
-        date: today,
+        date: future,
         time: "07:45",
         guestName: "Old pending",
         guestPhone: "+355 69 123 4567",
+        guestLocale: "en",
+        guests: 1,
+        status: "pending",
+        totalEur: "100.00",
+        depositEur: "30.00",
+        notes: "",
+        source: "link",
+        createdAt: old,
+        updatedAt: old,
+      },
+      {
+        id: confirmedId,
+        code: `RZ-CUT-C-${Date.now()}`,
+        operatorId: DEMO_OPERATOR.id,
+        serviceId: "svc_gjirokaster",
+        date: future,
+        time: "07:45",
+        guestName: "Old confirmed",
+        guestPhone: "+355 69 123 4568",
         guestLocale: "en",
         guests: 1,
         status: "confirmed",
@@ -185,7 +276,7 @@ describe("booking store", () => {
         code: `RZ-CUT-D-${Date.now()}`,
         operatorId: DEMO_OPERATOR.id,
         serviceId: "svc_gjirokaster",
-        date: today,
+        date: todayIso(),
         time: "07:45",
         guestName: "Old deposit_paid",
         guestPhone: "+355 69 999 4567",
@@ -203,20 +294,17 @@ describe("booking store", () => {
 
     await applyNoShowCutoffForOperator({
       operatorId: DEMO_OPERATOR.id,
-      today,
       cutoffHours,
     });
 
-    const [pendingRow, depositPaidRow] = await Promise.all([
+    const [pendingRow, confirmedRow, depositPaidRow] = await Promise.all([
       db.select().from(bookings).where(eq(bookings.id, pendingId)).limit(1),
-      db
-        .select()
-        .from(bookings)
-        .where(eq(bookings.id, depositPaidId))
-        .limit(1),
+      db.select().from(bookings).where(eq(bookings.id, confirmedId)).limit(1),
+      db.select().from(bookings).where(eq(bookings.id, depositPaidId)).limit(1),
     ]);
 
-    expect(pendingRow[0]?.status).toBe("no_show");
+    expect(pendingRow[0]?.status).toBe("cancelled");
+    expect(confirmedRow[0]?.status).toBe("confirmed");
     expect(depositPaidRow[0]?.status).toBe("deposit_paid");
   });
 });

@@ -37,7 +37,7 @@ export async function GET(request: Request) {
   const cutoffHoursRaw = Number(process.env.NO_SHOW_CUTOFF_HOURS ?? "12");
   const cutoffHours = Number.isFinite(cutoffHoursRaw) ? cutoffHoursRaw : 12;
 
-  // Keep capacity accurate: turn old pending/confirmed into no-show before export.
+  // Keep capacity accurate: cancel stale unpaid pending bookings before export.
   await applyNoShowCutoffForOperator({
     operatorId: operator.id,
     today,

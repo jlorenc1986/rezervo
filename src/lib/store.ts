@@ -16,6 +16,14 @@ function activeStatusSql() {
   return sql`${bookings.status} in ('pending', 'confirmed', 'deposit_paid')`;
 }
 
+function isActiveStatus(status: BookingStatus) {
+  return (
+    status === "pending" ||
+    status === "confirmed" ||
+    status === "deposit_paid"
+  );
+}
+
 export async function getOperatorBySlug(
   slug: string,
 ): Promise<Operator | undefined> {
@@ -65,6 +73,16 @@ export async function getBookingByCode(
     .select()
     .from(bookings)
     .where(sql`lower(${bookings.code}) = lower(${code})`)
+    .limit(1);
+  return rows[0] ? mapBooking(rows[0]) : undefined;
+}
+
+export async function getBooking(id: string): Promise<Booking | undefined> {
+  const db = getDb();
+  const rows = await db
+    .select()
+    .from(bookings)
+    .where(eq(bookings.id, id))
     .limit(1);
   return rows[0] ? mapBooking(rows[0]) : undefined;
 }
@@ -202,9 +220,104 @@ export async function updateBookingStatus(
   return updated[0] ? mapBooking(updated[0]) : null;
 }
 
+export type UpdateBookingInput = {
+  date?: string;
+  time?: string;
+  guests?: number;
+  guestName?: string;
+  guestPhone?: string;
+  notes?: string;
+};
+
+export async function updateBooking(
+  id: string,
+  patch: UpdateBookingInput,
+): Promise<{ ok: true; booking: Booking } | { ok: false; error: string }> {
+  const booking = await getBooking(id);
+  if (!booking) {
+    return { ok: false, error: "Prenotazione non trovata" };
+  }
+
+  const service = await getService(booking.serviceId);
+  if (!service) {
+    return { ok: false, error: "Servizio non trovato" };
+  }
+
+  const nextDate = patch.date?.trim() || booking.date;
+  const nextTime = patch.time?.trim() || booking.time;
+  const nextGuests = patch.guests ?? booking.guests;
+  const nextName =
+    patch.guestName !== undefined ? patch.guestName.trim() : booking.guestName;
+  const nextPhone =
+    patch.guestPhone !== undefined
+      ? patch.guestPhone.trim()
+      : booking.guestPhone;
+  const nextNotes =
+    patch.notes !== undefined ? patch.notes.trim() : booking.notes;
+
+  if (!Number.isInteger(nextGuests) || nextGuests < 1) {
+    return { ok: false, error: "Numero ospiti non valido" };
+  }
+  if (nextGuests > service.capacity) {
+    return { ok: false, error: "Numero ospiti non valido" };
+  }
+  if (!nextName) {
+    return { ok: false, error: "Nome ospite obbligatorio" };
+  }
+  if (!nextPhone) {
+    return { ok: false, error: "Telefono ospite obbligatorio" };
+  }
+
+  if (isActiveStatus(booking.status)) {
+    const slots = await getAvailability(booking.serviceId, nextDate, 1);
+    const slot = slots.find((s) => s.time === nextTime);
+    if (!slot) {
+      return { ok: false, error: "Orario non disponibile per questa data" };
+    }
+
+    let remaining = slot.remaining;
+    if (booking.date === nextDate && booking.time === nextTime) {
+      remaining += booking.guests;
+    }
+    if (remaining < nextGuests) {
+      return { ok: false, error: "Posti insufficienti per questo orario" };
+    }
+  }
+
+  let totalEur = booking.totalEur;
+  let depositEur = booking.depositEur;
+  if (nextGuests !== booking.guests) {
+    totalEur = roundMoney(service.priceEur * nextGuests);
+    depositEur = roundMoney((totalEur * service.depositPercent) / 100);
+  }
+
+  const db = getDb();
+  const updated = await db
+    .update(bookings)
+    .set({
+      date: nextDate,
+      time: nextTime,
+      guests: nextGuests,
+      guestName: nextName,
+      guestPhone: nextPhone,
+      notes: nextNotes,
+      totalEur: totalEur.toFixed(2),
+      depositEur: depositEur.toFixed(2),
+      updatedAt: new Date(),
+    })
+    .where(eq(bookings.id, id))
+    .returning();
+
+  if (!updated[0]) {
+    return { ok: false, error: "Prenotazione non trovata" };
+  }
+  return { ok: true, booking: mapBooking(updated[0]) };
+}
+
+/** Cancel unpaid pending bookings older than cutoffHours (any tour date). */
 export async function applyNoShowCutoffForOperator(opts: {
   operatorId: string;
-  today: string;
+  today?: string;
   cutoffHours: number;
 }): Promise<number> {
   const cutoffMs = Math.max(0, opts.cutoffHours * 60 * 60 * 1000);
@@ -213,12 +326,11 @@ export async function applyNoShowCutoffForOperator(opts: {
   const db = getDb();
   const updated = await db
     .update(bookings)
-    .set({ status: "no_show", updatedAt: new Date() })
+    .set({ status: "cancelled", updatedAt: new Date() })
     .where(
       and(
         eq(bookings.operatorId, opts.operatorId),
-        eq(bookings.date, opts.today),
-        sql`${bookings.status} in ('pending', 'confirmed')`,
+        eq(bookings.status, "pending"),
         sql`${bookings.updatedAt} < ${cutoffDate.toISOString()}`,
       ),
     )
