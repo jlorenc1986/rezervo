@@ -2,7 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import type { Booking, BookingStatus, Operator } from "@/lib/types";
+import type {
+  Booking,
+  BookingStatus,
+  Operator,
+  Service,
+  SlotAvailability,
+} from "@/lib/types";
 import {
   formatDateLabel,
   formatMoney,
@@ -11,12 +17,15 @@ import {
   whatsappLink,
 } from "@/lib/format";
 import { depositReminderMessage } from "@/lib/deposit";
+import { BookingEditForm } from "@/components/BookingEditForm";
 
 export type EnrichedBooking = Booking & { serviceName: string };
 
 type Props = {
   operator: Operator;
   initialBookings: EnrichedBooking[];
+  services: Service[];
+  initialAvailability: Record<string, SlotAvailability[]>;
 };
 
 const STATUS_ACTIONS: { status: BookingStatus; label: string }[] = [
@@ -71,21 +80,31 @@ const btnPrimary =
 const btnWa =
   "rounded-full bg-[#25D366] px-4 py-2.5 text-sm font-medium text-white min-h-11 inline-flex items-center justify-center hover:brightness-105";
 
-export function OpsDashboard({ operator, initialBookings }: Props) {
+export function OpsDashboard({
+  operator,
+  initialBookings,
+  services,
+  initialAvailability,
+}: Props) {
   const [bookings, setBookings] = useState(initialBookings);
+  const [availability, setAvailability] = useState(initialAvailability);
   const [filter, setFilter] = useState<"today" | "all" | "pending">("today");
   const [shareCopied, setShareCopied] = useState(false);
   const [newAlert, setNewAlert] = useState<string | null>(null);
   const [exportBusy, setExportBusy] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [expandedActions, setExpandedActions] = useState<Record<string, boolean>>(
     {},
   );
   const knownIdsRef = useRef(new Set(initialBookings.map((b) => b.id)));
 
   const reload = useCallback(async () => {
-    const res = await fetch("/api/bookings/mine");
-    const data = await res.json();
+    const [bookingsRes, publicRes] = await Promise.all([
+      fetch("/api/bookings/mine"),
+      fetch(`/api/operators/${operator.slug}`),
+    ]);
+    const data = await bookingsRes.json();
     const list = (data.bookings ?? []) as EnrichedBooking[];
     const fresh = list.filter((b) => !knownIdsRef.current.has(b.id));
     if (fresh.length > 0) {
@@ -102,7 +121,13 @@ export function OpsDashboard({ operator, initialBookings }: Props) {
       }
     }
     setBookings(list);
-  }, []);
+    if (publicRes.ok) {
+      const pub = (await publicRes.json()) as {
+        availability?: Record<string, SlotAvailability[]>;
+      };
+      if (pub.availability) setAvailability(pub.availability);
+    }
+  }, [operator.slug]);
 
   const today = todayIso();
   const isDemo = operator.slug === "blue-ionian";
@@ -434,7 +459,30 @@ export function OpsDashboard({ operator, initialBookings }: Props) {
                     {showAll ? "Meno stati" : `Altri stati (${hiddenCount})`}
                   </button>
                 )}
+                {b.status !== "cancelled" && b.status !== "completed" && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setEditingId((id) => (id === b.id ? null : b.id))
+                    }
+                    className="rounded-full border border-line px-3 py-2.5 text-sm min-h-11 hover:border-sea/40"
+                  >
+                    {editingId === b.id ? "Chiudi" : "Modifica"}
+                  </button>
+                )}
               </div>
+              {editingId === b.id && (
+                <BookingEditForm
+                  booking={b}
+                  service={services.find((s) => s.id === b.serviceId)}
+                  slots={availability[b.serviceId] ?? []}
+                  onCancel={() => setEditingId(null)}
+                  onSaved={async () => {
+                    setEditingId(null);
+                    await reload();
+                  }}
+                />
+              )}
             </article>
           );
         })}

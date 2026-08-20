@@ -6,6 +6,7 @@ import {
 import { PATCH as patchBookingRoute } from "@/app/api/bookings/[id]/route";
 import * as auth from "@/lib/auth";
 import { closeDb } from "@/lib/db/client";
+import { DEMO_OPERATOR } from "@/lib/seed";
 import { getAvailability, resetDemoStore } from "@/lib/store";
 
 function nextWeekday(weekday: number): string {
@@ -21,6 +22,13 @@ function nextWeekday(weekday: number): string {
     }
   }
   throw new Error("weekday not found");
+}
+
+function mockOpsAuth() {
+  vi.spyOn(auth, "getAuthUser").mockResolvedValue({
+    id: "user-ops",
+  } as NonNullable<Awaited<ReturnType<typeof auth.getAuthUser>>>);
+  vi.spyOn(auth, "getOperatorForUser").mockResolvedValue(DEMO_OPERATOR);
 }
 
 describe("bookings API", () => {
@@ -83,6 +91,99 @@ describe("bookings API", () => {
       { params: Promise.resolve({ id: created.booking.id }) },
     );
     expect(patchRes.status).toBe(401);
+  });
+
+  it("edits booking fields when authenticated", async () => {
+    mockOpsAuth();
+    const slots = await getAvailability("svc_gjirokaster", nextWeekday(2), 1);
+    const open = slots.find((s) => s.remaining > 1)!;
+
+    const createRes = await createBookingRoute(
+      new Request("http://localhost/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug: "blue-ionian",
+          serviceId: "svc_gjirokaster",
+          date: open.date,
+          time: open.time,
+          guestName: "API Guest",
+          guestPhone: "+355691111111",
+          guestLocale: "en",
+          guests: 2,
+        }),
+      }),
+    );
+    expect(createRes.status).toBe(201);
+    const created = await createRes.json();
+
+    const patchRes = await patchBookingRoute(
+      new Request(`http://localhost/api/bookings/${created.booking.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ guests: 1, guestPhone: "+355699999999" }),
+      }),
+      { params: Promise.resolve({ id: created.booking.id }) },
+    );
+    expect(patchRes.status).toBe(200);
+    const body = await patchRes.json();
+    expect(body.booking.guests).toBe(1);
+    expect(body.booking.totalEur).toBe(55);
+    expect(body.booking.guestPhone).toBe("+355699999999");
+    expect(body.booking.status).toBe("pending");
+  });
+
+  it("returns 409 when editing onto a full slot", async () => {
+    mockOpsAuth();
+    const tue = await getAvailability("svc_gjirokaster", nextWeekday(2), 1);
+    const thu = await getAvailability("svc_gjirokaster", nextWeekday(4), 1);
+    const tueOpen = tue.find((s) => s.remaining > 0)!;
+    const thuOpen = thu.find((s) => s.remaining > 0)!;
+
+    await createBookingRoute(
+      new Request("http://localhost/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug: "blue-ionian",
+          serviceId: "svc_gjirokaster",
+          date: tueOpen.date,
+          time: tueOpen.time,
+          guestName: "Fills Tuesday",
+          guestPhone: "+355691000003",
+          guestLocale: "en",
+          guests: tueOpen.remaining,
+        }),
+      }),
+    );
+
+    const moverRes = await createBookingRoute(
+      new Request("http://localhost/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug: "blue-ionian",
+          serviceId: "svc_gjirokaster",
+          date: thuOpen.date,
+          time: thuOpen.time,
+          guestName: "Thursday Guest",
+          guestPhone: "+355691000004",
+          guestLocale: "en",
+          guests: 1,
+        }),
+      }),
+    );
+    const mover = await moverRes.json();
+
+    const patchRes = await patchBookingRoute(
+      new Request(`http://localhost/api/bookings/${mover.booking.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: tueOpen.date, time: tueOpen.time }),
+      }),
+      { params: Promise.resolve({ id: mover.booking.id }) },
+    );
+    expect(patchRes.status).toBe(409);
   });
 
   it("returns 400 when required fields are missing", async () => {
