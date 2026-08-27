@@ -6,9 +6,12 @@ import { defineConfig } from "vitest/config";
 config({ path: ".env.local" });
 config({ path: ".env" });
 
-if (!process.env.DATABASE_URL) {
-  process.env.DATABASE_URL =
-    "postgresql://rezervo:rezervo@127.0.0.1:54329/rezervo";
+const localTestDb = "postgresql://rezervo:rezervo@127.0.0.1:54329/rezervo";
+// Never hit the production pooler from .env.local: resetDemoStore wipes demo rows.
+if (!process.env.CI) {
+  process.env.DATABASE_URL = process.env.TEST_DATABASE_URL ?? localTestDb;
+} else if (!process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = localTestDb;
 }
 
 const root = path.dirname(fileURLToPath(import.meta.url));
